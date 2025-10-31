@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="text-center py-5">
+    <h1>{{ t('app_title') }}</h1>
+    <p class="lead">{{ 'Выберите регистрацию или вход, чтобы изучать криптографию.' if lang == 'ru' else 'Register or log in to study cryptography.' }}</p>
+    <a class="btn btn-primary btn-lg me-2" href="{{ url_for('register') }}">{{ t('register') }}</a>
+    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('login') }}">{{ t('login') }}</a>
+</div>
+{% endblock %}

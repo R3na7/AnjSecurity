@@ -1,0 +1,11 @@
+body {
+    background-color: #f5f6fa;
+}
+
+.card {
+    border: none;
+}
+
+.alert {
+    margin-top: 1rem;
+}
