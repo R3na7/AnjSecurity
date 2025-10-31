@@ -392,6 +392,6 @@ def create_app() -> Flask:
     with app.app_context():
         db.create_all()
         if User.query.filter_by(is_admin=True).count() == 0:
-            auth_service.register_user("admin", "Admin123+", "hash", is_admin=True)
+            auth_service.register_user("admin", "admin", "hash", is_admin=True)
 
     return app
