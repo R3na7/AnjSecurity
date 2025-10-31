@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ t('register') }}</h2>
+<form method="post" class="card card-body shadow-sm">
+    <div class="mb-3">
+        <label class="form-label">{{ 'Имя пользователя' if lang == 'ru' else 'Username' }}</label>
+        <input class="form-control" name="username" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Пароль' if lang == 'ru' else 'Password' }}</label>
+        <input type="password" class="form-control" name="password" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Алгоритм шифрования пароля' if lang == 'ru' else 'Password encryption algorithm' }}</label>
+        <select class="form-select" name="algorithm" id="algorithm-select" required>
+            <option value="">--</option>
+            {% for algorithm in algorithms %}
+            <option value="{{ algorithm.info.slug }}"
+                data-requires-key="{{ 'true' if algorithm.requires_key else 'false' }}"
+                data-key-label="{{ algorithm.get_key_label(lang) }}"
+                data-key-hint="{{ algorithm.get_key_hint(lang) }}"
+                data-key-type="{{ algorithm.key_input_type }}"
+            >{{ algorithm.info.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3" id="algorithm-key-container" style="display:none;">
+        <label class="form-label" id="algorithm-key-label"></label>
+        <input class="form-control" id="algorithm-key-input" name="algorithm_key">
+        <div class="form-text" id="algorithm-key-hint"></div>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ t('register') }}</button>
+</form>
+<script>
+    const algorithmSelect = document.getElementById('algorithm-select');
+    const keyContainer = document.getElementById('algorithm-key-container');
+    const keyLabel = document.getElementById('algorithm-key-label');
+    const keyInput = document.getElementById('algorithm-key-input');
+    const keyHint = document.getElementById('algorithm-key-hint');
+
+    function updateKeyField() {
+        const option = algorithmSelect.options[algorithmSelect.selectedIndex];
+        if (!option || option.dataset.requiresKey !== 'true') {
+            keyContainer.style.display = 'none';
+            keyInput.value = '';
+            keyInput.required = false;
+            return;
+        }
+        keyContainer.style.display = 'block';
+        keyLabel.textContent = option.dataset.keyLabel || 'Key';
+        keyHint.textContent = option.dataset.keyHint || '';
+        keyInput.type = option.dataset.keyType || 'text';
+        keyInput.required = true;
+    }
+
+    algorithmSelect.addEventListener('change', updateKeyField);
+    updateKeyField();
+</script>
+{% endblock %}

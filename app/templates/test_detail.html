@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ test.title_ru if lang == 'ru' else test.title_en }}</h2>
+<p class="text-muted">{{ test.description_ru if lang == 'ru' else test.description_en }}</p>
+<form method="post" class="card card-body shadow-sm">
+    {% for question in test.questions %}
+    <div class="mb-4">
+        <h5>{{ loop.index }}. {{ question.get_text(lang) }}</h5>
+        {% for option in question.get_choices(lang) %}
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ loop.index0 }}" required>
+            <label class="form-check-label">{{ option }}</label>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button class="btn btn-success" type="submit">{{ 'Завершить тест' if lang == 'ru' else 'Submit test' }}</button>
+</form>
+{% endblock %}

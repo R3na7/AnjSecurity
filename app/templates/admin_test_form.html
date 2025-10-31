@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ 'Новый тест' if lang == 'ru' else 'New test' }}</h2>
+<form method="post" class="card card-body shadow-sm">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Title (EN)</label>
+                <input class="form-control" name="title_en" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description (EN)</label>
+                <textarea class="form-control" name="description_en" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Question (EN)</label>
+                <textarea class="form-control" name="question_text_en" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Choices (EN)</label>
+                {% for i in range(1,5) %}
+                <input class="form-control mb-2" name="en_choice_{{ i }}" placeholder="Option {{ i }}">
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Название (RU)</label>
+                <input class="form-control" name="title_ru" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Описание (RU)</label>
+                <textarea class="form-control" name="description_ru" rows="4" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Вопрос (RU)</label>
+                <textarea class="form-control" name="question_text_ru" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Варианты (RU)</label>
+                {% for i in range(1,5) %}
+                <input class="form-control mb-2" name="ru_choice_{{ i }}" placeholder="Вариант {{ i }}">
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Номер правильного ответа (начиная с 0)' if lang == 'ru' else 'Correct answer index (starting at 0)' }}</label>
+        <input class="form-control" name="correct_index" value="0" type="number" min="0">
+    </div>
+    <button class="btn btn-primary" type="submit">{{ 'Сохранить' if lang == 'ru' else 'Save' }}</button>
+</form>
+{% endblock %}

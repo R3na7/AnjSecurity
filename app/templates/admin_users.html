@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ 'Управление пользователями' if lang == 'ru' else 'User management' }}</h2>
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">{{ 'Создать пользователя' if lang == 'ru' else 'Create user' }}</h5>
+        <form method="post" action="{{ url_for('admin_create_user') }}" class="row g-2 align-items-end" id="admin-create-user-form">
+            <div class="col-md-3">
+                <label class="form-label">{{ 'Имя' if lang == 'ru' else 'Username' }}</label>
+                <input class="form-control" name="username" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ 'Пароль' if lang == 'ru' else 'Password' }}</label>
+                <input class="form-control" type="password" name="password" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{{ 'Алгоритм' if lang == 'ru' else 'Algorithm' }}</label>
+                <select class="form-select" name="algorithm" id="admin-algorithm-select" required>
+                    <option value="">--</option>
+                    {% for algorithm in algorithms %}
+                    <option value="{{ algorithm.info.slug }}"
+                        data-requires-key="{{ 'true' if algorithm.requires_key else 'false' }}"
+                        data-key-label="{{ algorithm.get_key_label(lang) }}"
+                        data-key-hint="{{ algorithm.get_key_hint(lang) }}"
+                        data-key-type="{{ algorithm.key_input_type }}"
+                    >{{ algorithm.info.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3" id="admin-key-container" style="display:none;">
+                <label class="form-label" id="admin-key-label"></label>
+                <input class="form-control" id="admin-key-input" name="algorithm_key">
+                <div class="form-text" id="admin-key-hint"></div>
+            </div>
+            <div class="col-md-3" id="admin-submit-container">
+                <button class="btn btn-primary" type="submit">{{ 'Создать' if lang == 'ru' else 'Create' }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+<table class="table table-striped table-hover shadow-sm">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>{{ 'Имя пользователя' if lang == 'ru' else 'Username' }}</th>
+            <th>{{ 'Роль' if lang == 'ru' else 'Role' }}</th>
+            <th>{{ 'Статус' if lang == 'ru' else 'Status' }}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>
+                {% if lang == 'ru' %}
+                    {{ 'Администратор' if user.is_admin else 'Пользователь' }}
+                {% else %}
+                    {{ 'Administrator' if user.is_admin else 'User' }}
+                {% endif %}
+            </td>
+            <td>
+                {% if user.is_blocked %}
+                    <span class="badge bg-danger">{{ 'Заблокирован' if lang == 'ru' else 'Blocked' }}</span>
+                {% else %}
+                    <span class="badge bg-success">{{ 'Активен' if lang == 'ru' else 'Active' }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if not user.is_admin %}
+                <form method="post" action="{{ url_for('admin_toggle_user', user_id=user.id) }}">
+                    <button class="btn btn-sm {% if user.is_blocked %}btn-success{% else %}btn-outline-danger{% endif %}" type="submit">
+                        {% if lang == 'ru' %}
+                            {{ 'Разблокировать' if user.is_blocked else 'Заблокировать' }}
+                        {% else %}
+                            {{ 'Unblock' if user.is_blocked else 'Block' }}
+                        {% endif %}
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<script>
+    const adminSelect = document.getElementById('admin-algorithm-select');
+    const adminKeyContainer = document.getElementById('admin-key-container');
+    const adminKeyLabel = document.getElementById('admin-key-label');
+    const adminKeyInput = document.getElementById('admin-key-input');
+    const adminKeyHint = document.getElementById('admin-key-hint');
+
+    function updateAdminKeyField() {
+        const option = adminSelect.options[adminSelect.selectedIndex];
+        if (!option || option.dataset.requiresKey !== 'true') {
+            adminKeyContainer.style.display = 'none';
+            adminKeyInput.required = false;
+            adminKeyInput.value = '';
+            return;
+        }
+        adminKeyContainer.style.display = 'block';
+        adminKeyLabel.textContent = option.dataset.keyLabel || 'Key';
+        adminKeyHint.textContent = option.dataset.keyHint || '';
+        adminKeyInput.type = option.dataset.keyType || 'text';
+        adminKeyInput.required = true;
+    }
+
+    adminSelect.addEventListener('change', updateAdminKeyField);
+    updateAdminKeyField();
+</script>
+{% endblock %}

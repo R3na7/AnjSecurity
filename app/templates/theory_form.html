@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ 'Новый материал' if lang == 'ru' else 'New article' }}</h2>
+<form method="post" class="card card-body shadow-sm">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Title (EN)</label>
+                <input class="form-control" name="title_en" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Content (EN)</label>
+                <textarea class="form-control" name="content_en" rows="6" required></textarea>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">Название (RU)</label>
+                <input class="form-control" name="title_ru" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Содержание (RU)</label>
+                <textarea class="form-control" name="content_ru" rows="6" required></textarea>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ 'Сохранить' if lang == 'ru' else 'Save' }}</button>
+</form>
+{% endblock %}
