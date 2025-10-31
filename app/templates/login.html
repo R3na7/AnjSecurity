@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ t('login') }}</h2>
+<form method="post" class="card card-body shadow-sm">
+    <div class="mb-3">
+        <label class="form-label">{{ 'Имя пользователя' if lang == 'ru' else 'Username' }}</label>
+        <input class="form-control" name="username" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Пароль' if lang == 'ru' else 'Password' }}</label>
+        <input type="password" class="form-control" name="password" required>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ t('login') }}</button>
+</form>
+{% endblock %}

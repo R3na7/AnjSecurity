@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>{{ t('tests') }}</h2>
+    {% if current_user.is_admin %}
+    <a class="btn btn-primary" href="{{ url_for('add_test') }}">{{ 'Добавить тест' if lang == 'ru' else 'Add test' }}</a>
+    {% endif %}
+</div>
+{% if tests %}
+    <div class="row g-3">
+    {% for test in tests %}
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ test.title_ru if lang == 'ru' else test.title_en }}</h5>
+                    <p class="card-text flex-grow-1">{{ test.description_ru if lang == 'ru' else test.description_en }}</p>
+                    <a class="btn btn-outline-primary mt-3" href="{{ url_for('take_test', test_id=test.id) }}">{{ 'Пройти тест' if lang == 'ru' else 'Take test' }}</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+<p>{{ 'Тесты пока не добавлены.' if lang == 'ru' else 'No tests yet.' }}</p>
+{% endif %}
+{% endblock %}
