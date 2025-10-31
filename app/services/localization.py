@@ -26,6 +26,7 @@ TRANSLATIONS = Localization(
         "theory": {"en": "Theory", "ru": "Теория"},
         "tests": {"en": "Tests", "ru": "Тесты"},
         "admin_panel": {"en": "Administration", "ru": "Администрирование"},
+        "change_password": {"en": "Change password", "ru": "Сменить пароль"},
         "blocked_message": {
             "en": "Your account is blocked.",
             "ru": "Ваш аккаунт заблокирован.",
@@ -33,6 +34,14 @@ TRANSLATIONS = Localization(
         "password_reset_required": {
             "en": "You must change your password to meet the new policy.",
             "ru": "Вам необходимо сменить пароль согласно новым требованиям.",
+        },
+        "password_policy_failed": {
+            "en": "Password must include letters, digits, arithmetic signs (+-*/), and satisfy the active policy.",
+            "ru": "Пароль должен содержать буквы, цифры, знаки операций (+-*/), и соответствовать активной политике.",
+        },
+        "encryption_key_required": {
+            "en": "Encryption key is required for the selected algorithm.",
+            "ru": "Для выбранного алгоритма требуется ключ шифрования.",
         },
     }
 )

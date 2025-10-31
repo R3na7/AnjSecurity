@@ -65,18 +65,53 @@ def create_app() -> Flask:
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "")
             algorithm = request.form.get("algorithm", "")
+            algorithm_key_raw = request.form.get("algorithm_key", "").strip()
             if not username or not password or not algorithm:
                 flash("All fields are required.", "danger")
             elif User.query.filter_by(username=username).first():
                 flash("Username already exists.", "danger")
             else:
-                user = User(username=username, encryption_algorithm=algorithm)
-                if not auth_service.plaintext_meets_restriction(user, password):
-                    flash("Password does not meet current restrictions.", "warning")
+                try:
+                    algorithm_obj = encryption_service.get_algorithm(algorithm)
+                except KeyError:
+                    flash("Unknown algorithm selected.", "danger")
                 else:
-                    auth_service.register_user(username, password, algorithm, is_admin=False)
-                    flash("Registration successful. Please log in.", "success")
-                    return redirect(url_for("login"))
+                    key_to_store = algorithm_key_raw if algorithm_obj.requires_key else None
+                    if algorithm_obj.requires_key and not algorithm_key_raw:
+                        flash(
+                            TRANSLATIONS.gettext("encryption_key_required", get_lang()),
+                            "danger",
+                        )
+                    else:
+                        user = User(
+                            username=username,
+                            encryption_algorithm=algorithm,
+                            encryption_key=key_to_store,
+                        )
+                        if not auth_service.plaintext_meets_restriction(user, password):
+                            flash(
+                                TRANSLATIONS.gettext(
+                                    "password_policy_failed", get_lang()
+                                ),
+                                "warning",
+                            )
+                        else:
+                            try:
+                                auth_service.register_user(
+                                    username,
+                                    password,
+                                    algorithm,
+                                    is_admin=False,
+                                    encryption_key=key_to_store,
+                                )
+                            except ValueError as exc:
+                                flash(str(exc), "danger")
+                            else:
+                                flash(
+                                    "Registration successful. Please log in.",
+                                    "success",
+                                )
+                                return redirect(url_for("login"))
         return render_template("register.html", algorithms=encryption_service.all_algorithms())
 
     @app.route("/login", methods=["GET", "POST"])
@@ -242,17 +277,46 @@ def create_app() -> Flask:
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         algorithm = request.form.get("algorithm", "")
+        algorithm_key_raw = request.form.get("algorithm_key", "").strip()
         if not username or not password or not algorithm:
             flash("All fields are required.", "danger")
         elif User.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
         else:
-            user = User(username=username, encryption_algorithm=algorithm)
-            if not auth_service.plaintext_meets_restriction(user, password):
-                flash("Password does not meet current restrictions.", "warning")
+            try:
+                algorithm_obj = encryption_service.get_algorithm(algorithm)
+            except KeyError:
+                flash("Unknown algorithm selected.", "danger")
             else:
-                auth_service.register_user(username, password, algorithm)
-                flash("User created.", "success")
+                key_to_store = algorithm_key_raw if algorithm_obj.requires_key else None
+                if algorithm_obj.requires_key and not algorithm_key_raw:
+                    flash(
+                        TRANSLATIONS.gettext("encryption_key_required", get_lang()),
+                        "danger",
+                    )
+                else:
+                    user = User(
+                        username=username,
+                        encryption_algorithm=algorithm,
+                        encryption_key=key_to_store,
+                    )
+                    if not auth_service.plaintext_meets_restriction(user, password):
+                        flash(
+                            TRANSLATIONS.gettext("password_policy_failed", get_lang()),
+                            "warning",
+                        )
+                    else:
+                        try:
+                            auth_service.register_user(
+                                username,
+                                password,
+                                algorithm,
+                                encryption_key=key_to_store,
+                            )
+                        except ValueError as exc:
+                            flash(str(exc), "danger")
+                        else:
+                            flash("User created.", "success")
         return redirect(url_for("admin_users"))
 
     @app.route("/admin/users/<int:user_id>/toggle", methods=["POST"])
@@ -293,13 +357,37 @@ def create_app() -> Flask:
     def change_password() -> Any:
         if request.method == "POST":
             new_password = request.form.get("password", "")
+            new_key_raw = request.form.get("algorithm_key", "")
+            algorithm_obj = encryption_service.get_algorithm(
+                current_user.encryption_algorithm
+            )
             if not auth_service.plaintext_meets_restriction(current_user, new_password):
-                flash("Password does not meet policy.", "danger")
+                flash(TRANSLATIONS.gettext("password_policy_failed", get_lang()), "danger")
             else:
-                auth_service.change_password(current_user, new_password)
-                flash("Password updated.", "success")
-                return redirect(url_for("dashboard"))
-        return render_template("change_password.html")
+                key_to_store = (
+                    new_key_raw.strip()
+                    if new_key_raw.strip()
+                    else current_user.encryption_key
+                )
+                if algorithm_obj.requires_key and not key_to_store:
+                    flash(
+                        TRANSLATIONS.gettext("encryption_key_required", get_lang()),
+                        "danger",
+                    )
+                else:
+                    try:
+                        auth_service.change_password(
+                            current_user,
+                            new_password,
+                            new_key_raw.strip() if new_key_raw.strip() else None,
+                        )
+                    except ValueError as exc:
+                        flash(str(exc), "danger")
+                    else:
+                        flash("Password updated.", "success")
+                        return redirect(url_for("dashboard"))
+        algorithm = encryption_service.get_algorithm(current_user.encryption_algorithm)
+        return render_template("change_password.html", algorithm=algorithm)
 
     with app.app_context():
         db.create_all()

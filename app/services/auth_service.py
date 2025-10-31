@@ -19,13 +19,17 @@ class AuthService:
         password: str,
         algorithm_slug: str,
         is_admin: bool = False,
+        encryption_key: Optional[str] = None,
     ) -> User:
-        encrypted_password = self.encryption_service.encrypt(algorithm_slug, password)
+        encrypted_password = self.encryption_service.encrypt(
+            algorithm_slug, password, encryption_key
+        )
         user = User(
             username=username,
             password_encrypted=encrypted_password,
             encryption_algorithm=algorithm_slug,
             is_admin=is_admin,
+            encryption_key=encryption_key,
         )
         db.session.add(user)
         db.session.commit()
@@ -38,16 +42,24 @@ class AuthService:
         if not user.can_login():
             return None
         if not self.encryption_service.verify(
-            user.encryption_algorithm, password, user.password_encrypted
+            user.encryption_algorithm,
+            password,
+            user.password_encrypted,
+            user.encryption_key,
         ):
             return None
         return user
 
-    def change_password(self, user: User, new_password: str) -> None:
+    def change_password(
+        self, user: User, new_password: str, encryption_key: Optional[str] = None
+    ) -> None:
+        key_to_use = encryption_key if encryption_key is not None else user.encryption_key
         encrypted = self.encryption_service.encrypt(
-            user.encryption_algorithm, new_password
+            user.encryption_algorithm, new_password, key_to_use
         )
         user.password_encrypted = encrypted
+        if encryption_key is not None:
+            user.encryption_key = encryption_key
         user.must_reset_password = False
         db.session.commit()
 
@@ -69,7 +81,17 @@ class AuthService:
             db.session.commit()
         return policy
 
+    def _meets_baseline(self, user: User, plaintext: str) -> bool:
+        if user.is_admin:
+            return True
+        has_letter = bool(re.search(r"[A-Za-zА-Яа-я]", plaintext))
+        has_digit = any(ch.isdigit() for ch in plaintext)
+        has_arithmetic = any(ch in "+-*/" for ch in plaintext)
+        return has_letter and has_digit and has_arithmetic
+
     def plaintext_meets_restriction(self, user: User, plaintext: str) -> bool:
+        if not self._meets_baseline(user, plaintext):
+            return False
         restriction = self.ensure_policy().restriction
         if restriction is None:
             return True
