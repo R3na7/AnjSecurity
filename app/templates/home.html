@@ -1,9 +1,29 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="text-center py-5">
-    <h1>{{ t('app_title') }}</h1>
-    <p class="lead">{{ 'Выберите регистрацию или вход, чтобы изучать криптографию.' if lang == 'ru' else 'Register or log in to study cryptography.' }}</p>
-    <a class="btn btn-primary btn-lg me-2" href="{{ url_for('register') }}">{{ t('register') }}</a>
-    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('login') }}">{{ t('login') }}</a>
+    <h1 class="mb-4">{{ t('app_title') }}</h1>
+    <div class="row justify-content-center g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body d-flex flex-column align-items-center">
+                    <div class="display-3">🆕</div>
+                    <h3 class="mt-3">{{ t('register') }}</h3>
+                    <p class="text-muted">{{ 'Создайте аккаунт и выберите свой алгоритм шифрования.' if lang == 'ru' else 'Create an account and choose your password encryption algorithm.' }}</p>
+                    <a class="btn btn-primary mt-auto" href="{{ url_for('register') }}">{{ t('register') }}</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body d-flex flex-column align-items-center">
+                    <div class="display-3">🔑</div>
+                    <h3 class="mt-3">{{ t('login') }}</h3>
+                    <p class="text-muted">{{ 'Войдите, чтобы изучать теорию и проходить тесты.' if lang == 'ru' else 'Sign in to read theory and take quizzes.' }}</p>
+                    <a class="btn btn-outline-secondary mt-auto" href="{{ url_for('login') }}">{{ t('login') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="lead">{{ 'Начните с регистрации или входа, а затем переходите к обучению криптографии.' if lang == 'ru' else 'Start by registering or logging in and continue your cryptography journey.' }}</p>
 </div>
 {% endblock %}

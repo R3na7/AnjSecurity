@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>{{ test.title_ru if lang == 'ru' else test.title_en }}</h2>
-<p class="text-muted">{{ test.description_ru if lang == 'ru' else test.description_en }}</p>
+<h2>{{ test.display_title(lang) }}</h2>
+{% set description = test.display_description(lang) %}
+{% if description %}
+<p class="text-muted">{{ description }}</p>
+{% endif %}
 <form method="post" class="card card-body shadow-sm">
     {% for question in test.questions %}
     <div class="mb-4">

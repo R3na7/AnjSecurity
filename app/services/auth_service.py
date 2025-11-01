@@ -20,6 +20,7 @@ class AuthService:
         algorithm_slug: str,
         is_admin: bool = False,
         encryption_key: Optional[str] = None,
+        must_reset: bool = False,
     ) -> User:
         encrypted_password = self.encryption_service.encrypt(
             algorithm_slug, password, encryption_key
@@ -30,6 +31,7 @@ class AuthService:
             encryption_algorithm=algorithm_slug,
             is_admin=is_admin,
             encryption_key=encryption_key,
+            must_reset_password=must_reset,
         )
         db.session.add(user)
         db.session.commit()
@@ -71,36 +73,68 @@ class AuthService:
             db.session.commit()
         return policy
 
-    def set_policy(self, restriction: Optional[PasswordRestriction]) -> PasswordPolicy:
+    def update_policy(
+        self,
+        restriction: Optional[PasswordRestriction],
+        admin_require_letter: bool,
+        admin_require_digit: bool,
+        admin_require_arithmetic: bool,
+    ) -> PasswordPolicy:
         policy = self.ensure_policy()
+        previous_restriction = policy.restriction
+        previous_admin = policy.admin_requirements()
+
         policy.restriction = restriction
-        db.session.commit()
-        if restriction is not None:
+        policy.admin_require_letter = admin_require_letter
+        policy.admin_require_digit = admin_require_digit
+        policy.admin_require_arithmetic = admin_require_arithmetic
+        if restriction != previous_restriction:
             for user in User.query.filter_by(is_admin=False).all():
                 user.must_reset_password = True
-            db.session.commit()
+
+        if (
+            previous_admin["letter"] != admin_require_letter
+            or previous_admin["digit"] != admin_require_digit
+            or previous_admin["arithmetic"] != admin_require_arithmetic
+        ):
+            for admin in User.query.filter_by(is_admin=True).all():
+                admin.must_reset_password = True
+        db.session.commit()
         return policy
 
-    def _meets_baseline(self, user: User, plaintext: str) -> bool:
-        if user.is_admin:
-            return True
+    def _non_admin_baseline(self, plaintext: str) -> bool:
         has_letter = bool(re.search(r"[A-Za-zА-Яа-я]", plaintext))
         has_digit = any(ch.isdigit() for ch in plaintext)
         has_arithmetic = any(ch in "+-*/" for ch in plaintext)
         return has_letter and has_digit and has_arithmetic
 
     def plaintext_meets_restriction(self, user: User, plaintext: str) -> bool:
-        if not self._meets_baseline(user, plaintext):
+        policy = self.ensure_policy()
+        has_letter = bool(re.search(r"[A-Za-zА-Яа-я]", plaintext))
+        has_digit = any(ch.isdigit() for ch in plaintext)
+        has_arithmetic = any(ch in "+-*/" for ch in plaintext)
+
+        if not user.is_admin and not self._non_admin_baseline(plaintext):
             return False
-        restriction = self.ensure_policy().restriction
+
+        if user.is_admin:
+            requirements = policy.admin_requirements()
+            if requirements["letter"] and not has_letter:
+                return False
+            if requirements["digit"] and not has_digit:
+                return False
+            if requirements["arithmetic"] and not has_arithmetic:
+                return False
+
+        restriction = policy.restriction
         if restriction is None:
             return True
         if restriction == PasswordRestriction.REQUIRE_LETTER:
-            return bool(re.search(r"[A-Za-zА-Яа-я]", plaintext))
+            return has_letter
         if restriction == PasswordRestriction.REQUIRE_DIGIT:
-            return any(ch.isdigit() for ch in plaintext)
+            return has_digit
         if restriction == PasswordRestriction.REQUIRE_ARITHMETIC:
-            return any(ch in "+-*/" for ch in plaintext)
+            return has_arithmetic
         if restriction == PasswordRestriction.DISALLOW_USERNAME_MATCH:
             return plaintext.lower() != user.username.lower()
         if restriction == PasswordRestriction.MIN_LENGTH_TEN:

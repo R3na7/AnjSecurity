@@ -55,12 +55,20 @@ class User(db.Model, UserMixin):
     encryption_key = db.Column(db.Text, nullable=True)
     is_admin = db.Column(db.Boolean, default=False)
     is_blocked = db.Column(db.Boolean, default=False)
+    can_access_theory = db.Column(db.Boolean, default=True)
+    can_access_tests = db.Column(db.Boolean, default=True)
     must_reset_password = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def can_login(self) -> bool:
         return not self.is_blocked
+
+    def can_view_theory(self) -> bool:
+        return self.can_access_theory
+
+    def can_take_tests(self) -> bool:
+        return self.can_access_tests
 
 
 class TheoryArticle(db.Model):
@@ -78,11 +86,21 @@ class Test(db.Model):
     __tablename__ = "tests"
 
     id = db.Column(db.Integer, primary_key=True)
-    title_en = db.Column(db.String(255), nullable=False)
-    title_ru = db.Column(db.String(255), nullable=False)
-    description_en = db.Column(db.Text, nullable=False)
-    description_ru = db.Column(db.Text, nullable=False)
+    title_en = db.Column(db.String(255), nullable=True)
+    title_ru = db.Column(db.String(255), nullable=True)
+    description_en = db.Column(db.Text, nullable=True)
+    description_ru = db.Column(db.Text, nullable=True)
     questions = db.relationship("Question", backref="test", cascade="all, delete-orphan")
+
+    def display_title(self, lang: str) -> str:
+        if lang == "ru":
+            return self.title_ru or (self.questions[0].text_ru if self.questions else "")
+        return self.title_en or (self.questions[0].text_en if self.questions else "")
+
+    def display_description(self, lang: str) -> str:
+        if lang == "ru":
+            return self.description_ru or ""
+        return self.description_en or ""
 
 
 class Question(db.Model):
@@ -90,18 +108,22 @@ class Question(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey("tests.id"), nullable=False)
-    text_en = db.Column(db.Text, nullable=False)
-    text_ru = db.Column(db.Text, nullable=False)
-    choices_en = db.Column(db.Text, nullable=False)
-    choices_ru = db.Column(db.Text, nullable=False)
+    text_en = db.Column(db.Text, nullable=True)
+    text_ru = db.Column(db.Text, nullable=True)
+    choices_en = db.Column(db.Text, nullable=True)
+    choices_ru = db.Column(db.Text, nullable=True)
     correct_index = db.Column(db.Integer, nullable=False)
 
     def get_choices(self, language: str) -> List[str]:
         raw = self.choices_en if language == "en" else self.choices_ru
+        if not raw:
+            return []
         return [choice.strip() for choice in raw.split("\n") if choice.strip()]
 
     def get_text(self, language: str) -> str:
-        return self.text_en if language == "en" else self.text_ru
+        if language == "en":
+            return self.text_en or ""
+        return self.text_ru or ""
 
 
 class PasswordPolicy(db.Model):
@@ -109,6 +131,9 @@ class PasswordPolicy(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     active_restriction = db.Column(db.String(64), nullable=True)
+    admin_require_letter = db.Column(db.Boolean, default=False)
+    admin_require_digit = db.Column(db.Boolean, default=False)
+    admin_require_arithmetic = db.Column(db.Boolean, default=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @property
@@ -120,3 +145,10 @@ class PasswordPolicy(db.Model):
     @restriction.setter
     def restriction(self, restriction: PasswordRestriction | None) -> None:
         self.active_restriction = restriction.value if restriction else None
+
+    def admin_requirements(self) -> dict[str, bool]:
+        return {
+            "letter": bool(self.admin_require_letter),
+            "digit": bool(self.admin_require_digit),
+            "arithmetic": bool(self.admin_require_arithmetic),
+        }

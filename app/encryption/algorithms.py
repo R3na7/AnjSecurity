@@ -10,8 +10,12 @@ from typing import Dict, List, Optional
 @dataclass(frozen=True)
 class CipherInfo:
     slug: str
-    name: str
+    name_en: str
+    name_ru: str
     category: str
+
+    def get_name(self, lang: str) -> str:
+        return self.name_ru if lang == "ru" else self.name_en
 
 
 class CipherAlgorithm(ABC):
@@ -39,7 +43,12 @@ class CipherAlgorithm(ABC):
 
 
 class CaesarCipher(CipherAlgorithm):
-    info = CipherInfo("caesar", "Caesar Shift (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "caesar",
+        "Caesar Shift (Symmetric)",
+        "Шифр Цезаря (симметричный)",
+        "symmetric",
+    )
     requires_key = True
     key_input_type = "number"
     key_label_en = "Shift value"
@@ -68,7 +77,12 @@ class CaesarCipher(CipherAlgorithm):
 
 
 class VigenereCipher(CipherAlgorithm):
-    info = CipherInfo("vigenere", "Vigenere (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "vigenere",
+        "Vigenere (Symmetric)",
+        "Шифр Виженера (симметричный)",
+        "symmetric",
+    )
     requires_key = True
     key_label_en = "Keyword"
     key_label_ru = "Ключевое слово"
@@ -96,7 +110,12 @@ class VigenereCipher(CipherAlgorithm):
 
 
 class XorCipher(CipherAlgorithm):
-    info = CipherInfo("xor", "XOR Stream (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "xor",
+        "XOR Stream (Symmetric)",
+        "Потоковый XOR (симметричный)",
+        "symmetric",
+    )
     requires_key = True
     key_label_en = "Key phrase"
     key_label_ru = "Ключевая фраза"
@@ -120,7 +139,12 @@ class XorCipher(CipherAlgorithm):
 
 
 class ReverseCipher(CipherAlgorithm):
-    info = CipherInfo("reverse", "Reversed Base64 (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "reverse",
+        "Reversed Base64 (Symmetric)",
+        "Перевёрнутый Base64 (симметричный)",
+        "symmetric",
+    )
 
     def encrypt(self, plaintext: str, key: Optional[str] = None) -> str:
         reversed_text = plaintext[::-1]
@@ -131,7 +155,12 @@ class ReverseCipher(CipherAlgorithm):
 
 
 class HashCipher(CipherAlgorithm):
-    info = CipherInfo("hash", "SHA-256 Digest (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "hash",
+        "SHA-256 Digest (Symmetric)",
+        "Хэш SHA-256 (симметричный)",
+        "symmetric",
+    )
 
     def encrypt(self, plaintext: str, key: Optional[str] = None) -> str:
         return hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
@@ -141,7 +170,12 @@ class HashCipher(CipherAlgorithm):
 
 
 class SimpleRsaCipher(CipherAlgorithm):
-    info = CipherInfo("rsa", "RSA Mini (Asymmetric)", "asymmetric")
+    info = CipherInfo(
+        "rsa",
+        "RSA Mini (Asymmetric)",
+        "Упрощённый RSA (асимметричный)",
+        "asymmetric",
+    )
 
     def __init__(self) -> None:
         self.n = 3233
@@ -162,7 +196,12 @@ class SimpleRsaCipher(CipherAlgorithm):
 
 
 class SimpleElGamalCipher(CipherAlgorithm):
-    info = CipherInfo("elgamal", "ElGamal Mini (Asymmetric)", "asymmetric")
+    info = CipherInfo(
+        "elgamal",
+        "ElGamal Mini (Asymmetric)",
+        "Упрощённый Эль-Гамаль (асимметричный)",
+        "asymmetric",
+    )
 
     def __init__(self) -> None:
         self.p = 467
@@ -196,7 +235,12 @@ class SimpleElGamalCipher(CipherAlgorithm):
 
 
 class AffineCipher(CipherAlgorithm):
-    info = CipherInfo("affine", "Affine Map (Symmetric)", "symmetric")
+    info = CipherInfo(
+        "affine",
+        "Affine Map (Symmetric)",
+        "Аффинное отображение (симметричный)",
+        "symmetric",
+    )
 
     def encrypt(self, plaintext: str, key: Optional[str] = None) -> str:
         a = 5
