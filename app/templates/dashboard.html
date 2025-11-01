@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ t('theory') }}</h5>
+                <p class="card-text">{{ 'Читайте материалы по криптографическим алгоритмам.' if lang == 'ru' else 'Read materials about cryptographic algorithms.' }}</p>
+                <a class="btn btn-outline-primary" href="{{ url_for('theory_list') }}">{{ 'Перейти к теории' if lang == 'ru' else 'Go to theory' }}</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ t('tests') }}</h5>
+                <p class="card-text">{{ 'Проверьте знания, проходя тесты.' if lang == 'ru' else 'Check your knowledge with quizzes.' }}</p>
+                <a class="btn btn-outline-success" href="{{ url_for('test_list') }}">{{ 'Перейти к тестам' if lang == 'ru' else 'Go to tests' }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

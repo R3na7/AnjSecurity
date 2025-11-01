@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ 'Новый тест' if lang == 'ru' else 'New test' }}</h2>
+<form method="post" class="card card-body shadow-sm">
+    <div class="mb-3">
+        <label class="form-label">{{ 'Вопрос' if lang == 'ru' else 'Question' }}</label>
+        <textarea class="form-control" name="question_text" rows="3" required></textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Варианты ответа' if lang == 'ru' else 'Answer options' }}</label>
+        {% for i in range(1,5) %}
+        <input class="form-control mb-2" name="choice_{{ i }}" placeholder="{{ 'Вариант' if lang == 'ru' else 'Option' }} {{ i }}">
+        {% endfor %}
+        <div class="form-text">{{ 'Добавьте минимум два варианта.' if lang == 'ru' else 'Provide at least two choices.' }}</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Номер правильного ответа (начиная с 0)' if lang == 'ru' else 'Correct answer index (starting at 0)' }}</label>
+        <input class="form-control" name="correct_index" value="0" type="number" min="0">
+        <div class="form-text">{{ 'Используйте нумерацию вариантов сверху вниз.' if lang == 'ru' else 'Index corresponds to the option order above.' }}</div>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ 'Сохранить' if lang == 'ru' else 'Save' }}</button>
+</form>
+{% endblock %}
