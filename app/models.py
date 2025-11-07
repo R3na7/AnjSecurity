@@ -52,9 +52,7 @@ class User(db.Model, UserMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_encrypted = db.Column(db.Text, nullable=False)
-    encryption_algorithm = db.Column(db.String(50), nullable=False)
-    encryption_key = db.Column(db.Text, nullable=True)
+    password_hash = db.Column(db.Text, nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     is_blocked = db.Column(db.Boolean, default=False)
     can_access_theory = db.Column(db.Boolean, default=True)

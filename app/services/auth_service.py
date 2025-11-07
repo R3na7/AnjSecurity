@@ -4,33 +4,27 @@ import re
 from typing import Optional
 
 from flask_login import LoginManager
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.models import PasswordPolicy, PasswordRestriction, User, db
-from app.services.encryption_service import EncryptionService
 
 
 class AuthService:
-    def __init__(self, encryption_service: EncryptionService) -> None:
-        self.encryption_service = encryption_service
+    def __init__(self) -> None:
+        pass
 
     def register_user(
         self,
         username: str,
         password: str,
-        algorithm_slug: str,
         is_admin: bool = False,
-        encryption_key: Optional[str] = None,
         must_reset: bool = False,
     ) -> User:
-        encrypted_password = self.encryption_service.encrypt(
-            algorithm_slug, password, encryption_key
-        )
+        password_hash = generate_password_hash(password)
         user = User(
             username=username,
-            password_encrypted=encrypted_password,
-            encryption_algorithm=algorithm_slug,
+            password_hash=password_hash,
             is_admin=is_admin,
-            encryption_key=encryption_key,
             must_reset_password=must_reset,
         )
         db.session.add(user)
@@ -43,25 +37,12 @@ class AuthService:
             return None
         if not user.can_login():
             return None
-        if not self.encryption_service.verify(
-            user.encryption_algorithm,
-            password,
-            user.password_encrypted,
-            user.encryption_key,
-        ):
+        if not check_password_hash(user.password_hash, password):
             return None
         return user
 
-    def change_password(
-        self, user: User, new_password: str, encryption_key: Optional[str] = None
-    ) -> None:
-        key_to_use = encryption_key if encryption_key is not None else user.encryption_key
-        encrypted = self.encryption_service.encrypt(
-            user.encryption_algorithm, new_password, key_to_use
-        )
-        user.password_encrypted = encrypted
-        if encryption_key is not None:
-            user.encryption_key = encryption_key
+    def change_password(self, user: User, new_password: str) -> None:
+        user.password_hash = generate_password_hash(new_password)
         user.must_reset_password = False
         db.session.commit()
 

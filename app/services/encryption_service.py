@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Optional
 
 from app.encryption.algorithms import ALGORITHMS, CipherAlgorithm, CipherInfo
+from app.encryption.practice import PRACTICE_MATERIALS, PracticeMaterial
 
 
 class EncryptionService:
@@ -29,6 +30,9 @@ class EncryptionService:
         for algorithm in self._algorithms.values():
             categories.setdefault(algorithm.info.category, []).append(algorithm)
         return categories
+
+    def get_practice_material(self, slug: str) -> PracticeMaterial | None:
+        return PRACTICE_MATERIALS.get(slug)
 
     def encrypt(self, slug: str, plaintext: str, key: Optional[str] = None) -> str:
         algorithm = self.get_algorithm(slug)

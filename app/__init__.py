@@ -38,7 +38,7 @@ def create_app() -> Flask:
     login_manager.init_app(app)
 
     encryption_service = EncryptionService()
-    auth_service = AuthService(encryption_service)
+    auth_service = AuthService()
 
     @app.before_request
     def ensure_language() -> None:
@@ -89,55 +89,35 @@ def create_app() -> Flask:
         if request.method == "POST":
             username = request.form.get("username", "").strip()
             password = request.form.get("password", "")
-            algorithm = request.form.get("algorithm", "")
-            algorithm_key_raw = request.form.get("algorithm_key", "").strip()
-            if not username or not password or not algorithm:
+            if not username or not password:
                 flash("All fields are required.", "danger")
             elif User.query.filter_by(username=username).first():
                 flash("Username already exists.", "danger")
             else:
-                try:
-                    algorithm_obj = encryption_service.get_algorithm(algorithm)
-                except KeyError:
-                    flash("Unknown algorithm selected.", "danger")
+                user = User(username=username)
+                if not auth_service.plaintext_meets_restriction(user, password):
+                    flash(
+                        TRANSLATIONS.gettext(
+                            "password_policy_failed", get_lang()
+                        ),
+                        "warning",
+                    )
                 else:
-                    key_to_store = algorithm_key_raw if algorithm_obj.requires_key else None
-                    if algorithm_obj.requires_key and not algorithm_key_raw:
-                        flash(
-                            TRANSLATIONS.gettext("encryption_key_required", get_lang()),
-                            "danger",
+                    try:
+                        auth_service.register_user(
+                            username,
+                            password,
+                            is_admin=False,
                         )
+                    except ValueError as exc:
+                        flash(str(exc), "danger")
                     else:
-                        user = User(
-                            username=username,
-                            encryption_algorithm=algorithm,
-                            encryption_key=key_to_store,
+                        flash(
+                            "Registration successful. Please log in.",
+                            "success",
                         )
-                        if not auth_service.plaintext_meets_restriction(user, password):
-                            flash(
-                                TRANSLATIONS.gettext(
-                                    "password_policy_failed", get_lang()
-                                ),
-                                "warning",
-                            )
-                        else:
-                            try:
-                                auth_service.register_user(
-                                    username,
-                                    password,
-                                    algorithm,
-                                    is_admin=False,
-                                    encryption_key=key_to_store,
-                                )
-                            except ValueError as exc:
-                                flash(str(exc), "danger")
-                            else:
-                                flash(
-                                    "Registration successful. Please log in.",
-                                    "success",
-                                )
-                                return redirect(url_for("login"))
-        return render_template("register.html", algorithms=encryption_service.all_algorithms())
+                        return redirect(url_for("login"))
+        return render_template("register.html")
 
     @app.route("/login", methods=["GET", "POST"])
     def login() -> str:
@@ -191,7 +171,7 @@ def create_app() -> Flask:
             algorithm=algorithm,
         )
 
-    @app.route("/algorithms/<category>/<slug>/theory")
+    @app.route("/algorithms/<category>/<slug>/theory", methods=["GET", "POST"])
     @login_required
     def theory_list(category: str, slug: str) -> str:
         category = validate_category(category)
@@ -205,12 +185,38 @@ def create_app() -> Flask:
             .order_by(TheoryArticle.created_at.desc())
             .all()
         )
+        practice_material = encryption_service.get_practice_material(algorithm.info.slug)
+        practice_result: str | None = None
+        practice_error: str | None = None
+        practice_form = {"text": "", "key": "", "operation": "encrypt"}
+        active_tab = request.args.get("tab", "materials")
+        if request.method == "POST":
+            active_tab = "practice"
+            practice_form["text"] = request.form.get("practice_text", "")
+            practice_form["key"] = request.form.get("practice_key", "").strip()
+            practice_form["operation"] = request.form.get("practice_operation", "encrypt")
+            try:
+                key_value = practice_form["key"] if algorithm.requires_key else None
+                if algorithm.requires_key and not key_value:
+                    raise ValueError(TRANSLATIONS.gettext("encryption_key_required", lang))
+                wants_decrypt = practice_form["operation"] == "decrypt"
+                if wants_decrypt and algorithm.supports_decrypt:
+                    practice_result = algorithm.decrypt(practice_form["text"], key_value)
+                else:
+                    practice_result = algorithm.encrypt(practice_form["text"], key_value)
+            except Exception as exc:  # noqa: BLE001
+                practice_error = str(exc)
         return render_template(
             "theory_list.html",
             algorithm=algorithm,
             category=category,
             articles=articles,
             lang=lang,
+            practice_material=practice_material,
+            practice_result=practice_result,
+            practice_error=practice_error,
+            practice_form=practice_form,
+            active_tab=active_tab,
         )
 
     @app.route("/algorithms/<category>/<slug>/theory/add", methods=["GET", "POST"])
@@ -572,47 +578,28 @@ def create_app() -> Flask:
             return redirect(url_for("admin_users"))
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
-        algorithm = request.form.get("algorithm", "")
-        algorithm_key_raw = request.form.get("algorithm_key", "").strip()
-        if not username or not password or not algorithm:
+        if not username or not password:
             flash("All fields are required.", "danger")
         elif User.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
         else:
-            try:
-                algorithm_obj = encryption_service.get_algorithm(algorithm)
-            except KeyError:
-                flash("Unknown algorithm selected.", "danger")
+            user = User(username=username)
+            if not auth_service.plaintext_meets_restriction(user, password):
+                flash(
+                    TRANSLATIONS.gettext("password_policy_failed", get_lang()),
+                    "warning",
+                )
             else:
-                key_to_store = algorithm_key_raw if algorithm_obj.requires_key else None
-                if algorithm_obj.requires_key and not algorithm_key_raw:
-                    flash(
-                        TRANSLATIONS.gettext("encryption_key_required", get_lang()),
-                        "danger",
+                try:
+                    auth_service.register_user(
+                        username,
+                        password,
+                        is_admin=False,
                     )
+                except ValueError as exc:
+                    flash(str(exc), "danger")
                 else:
-                    user = User(
-                        username=username,
-                        encryption_algorithm=algorithm,
-                        encryption_key=key_to_store,
-                    )
-                    if not auth_service.plaintext_meets_restriction(user, password):
-                        flash(
-                            TRANSLATIONS.gettext("password_policy_failed", get_lang()),
-                            "warning",
-                        )
-                    else:
-                        try:
-                            auth_service.register_user(
-                                username,
-                                password,
-                                algorithm,
-                                encryption_key=key_to_store,
-                            )
-                        except ValueError as exc:
-                            flash(str(exc), "danger")
-                        else:
-                            flash("User created.", "success")
+                    flash("User created.", "success")
         return redirect(url_for("admin_users"))
 
     @app.route("/admin/users/<int:user_id>/toggle", methods=["POST"])
@@ -686,37 +673,20 @@ def create_app() -> Flask:
     def change_password() -> Any:
         if request.method == "POST":
             new_password = request.form.get("password", "")
-            new_key_raw = request.form.get("algorithm_key", "")
-            algorithm_obj = encryption_service.get_algorithm(
-                current_user.encryption_algorithm
-            )
             if not auth_service.plaintext_meets_restriction(current_user, new_password):
                 flash(TRANSLATIONS.gettext("password_policy_failed", get_lang()), "danger")
             else:
-                key_to_store = (
-                    new_key_raw.strip()
-                    if new_key_raw.strip()
-                    else current_user.encryption_key
-                )
-                if algorithm_obj.requires_key and not key_to_store:
-                    flash(
-                        TRANSLATIONS.gettext("encryption_key_required", get_lang()),
-                        "danger",
+                try:
+                    auth_service.change_password(
+                        current_user,
+                        new_password,
                     )
+                except ValueError as exc:
+                    flash(str(exc), "danger")
                 else:
-                    try:
-                        auth_service.change_password(
-                            current_user,
-                            new_password,
-                            new_key_raw.strip() if new_key_raw.strip() else None,
-                        )
-                    except ValueError as exc:
-                        flash(str(exc), "danger")
-                    else:
-                        flash("Password updated.", "success")
-                        return redirect(url_for("dashboard"))
-        algorithm = encryption_service.get_algorithm(current_user.encryption_algorithm)
-        return render_template("change_password.html", algorithm=algorithm)
+                    flash("Password updated.", "success")
+                    return redirect(url_for("dashboard"))
+        return render_template("change_password.html")
 
     with app.app_context():
         db.create_all()
@@ -724,7 +694,6 @@ def create_app() -> Flask:
             auth_service.register_user(
                 "admin",
                 "",
-                "hash",
                 is_admin=True,
                 must_reset=True,
             )

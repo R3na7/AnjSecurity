@@ -27,6 +27,38 @@ TRANSLATIONS = Localization(
         "tests": {"en": "Tests", "ru": "Тесты"},
         "admin_panel": {"en": "Administration", "ru": "Администрирование"},
         "change_password": {"en": "Change password", "ru": "Сменить пароль"},
+        "theory_materials_tab": {
+            "en": "Theory articles",
+            "ru": "Лекционные материалы",
+        },
+        "practice_tab": {
+            "en": "Practical implementation",
+            "ru": "Практическая часть",
+        },
+        "practice_input_label": {
+            "en": "Text to process",
+            "ru": "Текст для обработки",
+        },
+        "practice_operation_label": {
+            "en": "Operation",
+            "ru": "Операция",
+        },
+        "practice_operation_encrypt": {
+            "en": "Encrypt",
+            "ru": "Зашифровать",
+        },
+        "practice_operation_decrypt": {
+            "en": "Decrypt",
+            "ru": "Расшифровать",
+        },
+        "practice_run_button": {
+            "en": "Run example",
+            "ru": "Выполнить",
+        },
+        "practice_result_label": {
+            "en": "Result",
+            "ru": "Результат",
+        },
         "blocked_message": {
             "en": "Your account is blocked.",
             "ru": "Ваш аккаунт заблокирован.",

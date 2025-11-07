@@ -19,3 +19,22 @@ body {
     font-size: 1.25rem;
     font-weight: 600;
 }
+
+.theory-content {
+    white-space: pre-wrap;
+}
+
+.practice-code {
+    background-color: #1e1e1e;
+    color: #f8f8f2;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.9rem;
+}
+
+.practice-form textarea,
+.practice-form input,
+.practice-form select {
+    font-family: inherit;
+}

@@ -21,6 +21,7 @@ class CipherInfo:
 class CipherAlgorithm(ABC):
     info: CipherInfo
     requires_key: bool = False
+    supports_decrypt: bool = False
     key_input_type: str = "text"
     key_label_en: str = "Key"
     key_label_ru: str = "Ключ"
@@ -41,6 +42,9 @@ class CipherAlgorithm(ABC):
     def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
         raise NotImplementedError
 
+    def decrypt(self, ciphertext: str, key: Optional[str] = None) -> str:
+        raise NotImplementedError("Decryption is not implemented for this algorithm.")
+
 
 class CaesarCipher(CipherAlgorithm):
     info = CipherInfo(
@@ -50,6 +54,7 @@ class CaesarCipher(CipherAlgorithm):
         "symmetric",
     )
     requires_key = True
+    supports_decrypt = True
     key_input_type = "number"
     key_label_en = "Shift value"
     key_label_ru = "Сдвиг"
@@ -75,6 +80,13 @@ class CaesarCipher(CipherAlgorithm):
     def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
         return self.encrypt(plaintext, key) == encrypted
 
+    def decrypt(self, ciphertext: str, key: Optional[str] = None) -> str:
+        shift = self._parse_key(key)
+        decrypted = []
+        for ch in ciphertext:
+            decrypted.append(chr((ord(ch) - shift) % 65536))
+        return "".join(decrypted)
+
 
 class VigenereCipher(CipherAlgorithm):
     info = CipherInfo(
@@ -84,6 +96,7 @@ class VigenereCipher(CipherAlgorithm):
         "symmetric",
     )
     requires_key = True
+    supports_decrypt = True
     key_label_en = "Keyword"
     key_label_ru = "Ключевое слово"
     key_hint_en = "Letters only, e.g. SECURITY"
@@ -108,6 +121,14 @@ class VigenereCipher(CipherAlgorithm):
     def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
         return self.encrypt(plaintext, key) == encrypted
 
+    def decrypt(self, ciphertext: str, key: Optional[str] = None) -> str:
+        keyword = self._parse_key(key)
+        key_cycle = (keyword * ((len(ciphertext) // len(keyword)) + 1))[: len(ciphertext)]
+        decrypted_chars: List[str] = []
+        for c, k in zip(ciphertext, key_cycle):
+            decrypted_chars.append(chr((ord(c) - ord(k)) % 65536))
+        return "".join(decrypted_chars)
+
 
 class XorCipher(CipherAlgorithm):
     info = CipherInfo(
@@ -117,6 +138,7 @@ class XorCipher(CipherAlgorithm):
         "symmetric",
     )
     requires_key = True
+    supports_decrypt = True
     key_label_en = "Key phrase"
     key_label_ru = "Ключевая фраза"
     key_hint_en = "Will be converted to bytes"
@@ -137,21 +159,12 @@ class XorCipher(CipherAlgorithm):
     def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
         return self.encrypt(plaintext, key) == encrypted
 
-
-class ReverseCipher(CipherAlgorithm):
-    info = CipherInfo(
-        "reverse",
-        "Reversed Base64 (Symmetric)",
-        "Перевёрнутый Base64 (симметричный)",
-        "symmetric",
-    )
-
-    def encrypt(self, plaintext: str, key: Optional[str] = None) -> str:
-        reversed_text = plaintext[::-1]
-        return base64.b64encode(reversed_text.encode("utf-8")).decode("utf-8")
-
-    def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
-        return self.encrypt(plaintext, key) == encrypted
+    def decrypt(self, ciphertext: str, key: Optional[str] = None) -> str:
+        key_bytes = self._parse_key(key)
+        encrypted = base64.b64decode(ciphertext.encode("utf-8"))
+        key_cycle = (key_bytes * ((len(encrypted) // len(key_bytes)) + 1))[: len(encrypted)]
+        decrypted = bytes([b ^ k for b, k in zip(encrypted, key_cycle)])
+        return decrypted.decode("utf-8")
 
 
 class HashCipher(CipherAlgorithm):
@@ -176,6 +189,7 @@ class SimpleRsaCipher(CipherAlgorithm):
         "Упрощённый RSA (асимметричный)",
         "asymmetric",
     )
+    supports_decrypt = True
 
     def __init__(self) -> None:
         self.n = 3233
@@ -186,7 +200,7 @@ class SimpleRsaCipher(CipherAlgorithm):
         encrypted_numbers = [str(pow(ord(ch), self.e, self.n)) for ch in plaintext]
         return "-".join(encrypted_numbers)
 
-    def decrypt(self, encrypted: str) -> str:
+    def decrypt(self, encrypted: str, key: Optional[str] = None) -> str:
         numbers = [int(part) for part in encrypted.split("-") if part]
         decrypted_chars = [chr(pow(num, self.d, self.n)) for num in numbers]
         return "".join(decrypted_chars)
@@ -202,6 +216,7 @@ class SimpleElGamalCipher(CipherAlgorithm):
         "Упрощённый Эль-Гамаль (асимметричный)",
         "asymmetric",
     )
+    supports_decrypt = True
 
     def __init__(self) -> None:
         self.p = 467
@@ -218,7 +233,7 @@ class SimpleElGamalCipher(CipherAlgorithm):
             encrypted_pairs.append(f"{r}:{t}")
         return "|".join(encrypted_pairs)
 
-    def decrypt(self, encrypted: str) -> str:
+    def decrypt(self, encrypted: str, key: Optional[str] = None) -> str:
         pairs = [pair for pair in encrypted.split("|") if pair]
         decoded_bytes = []
         for pair in pairs:
@@ -241,6 +256,7 @@ class AffineCipher(CipherAlgorithm):
         "Аффинное отображение (симметричный)",
         "symmetric",
     )
+    supports_decrypt = True
 
     def encrypt(self, plaintext: str, key: Optional[str] = None) -> str:
         a = 5
@@ -253,13 +269,21 @@ class AffineCipher(CipherAlgorithm):
     def matches(self, plaintext: str, encrypted: str, key: Optional[str] = None) -> bool:
         return self.encrypt(plaintext, key) == encrypted
 
+    def decrypt(self, ciphertext: str, key: Optional[str] = None) -> str:
+        a = 5
+        b = 8
+        a_inv = pow(a, -1, 65536)
+        decrypted_chars = []
+        for ch in ciphertext:
+            decrypted_chars.append(chr(((ord(ch) - b) * a_inv) % 65536))
+        return "".join(decrypted_chars)
+
 
 def get_algorithms() -> Dict[str, CipherAlgorithm]:
     algorithms: List[CipherAlgorithm] = [
         CaesarCipher(),
         VigenereCipher(),
         XorCipher(),
-        ReverseCipher(),
         HashCipher(),
         AffineCipher(),
         SimpleRsaCipher(),
