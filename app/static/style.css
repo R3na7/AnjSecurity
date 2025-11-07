@@ -1,0 +1,40 @@
+body {
+    background-color: #f5f6fa;
+}
+
+.card {
+    border: none;
+}
+
+.alert {
+    margin-top: 1rem;
+}
+
+.dropdown-hover:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
+
+.test-timer {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.theory-content {
+    white-space: pre-wrap;
+}
+
+.practice-code {
+    background-color: #1e1e1e;
+    color: #f8f8f2;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    font-size: 0.9rem;
+}
+
+.practice-form textarea,
+.practice-form input,
+.practice-form select {
+    font-family: inherit;
+}

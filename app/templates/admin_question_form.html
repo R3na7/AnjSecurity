@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-1">{{ 'Новый вопрос' if lang == 'ru' else 'New question' }}</h2>
+<p class="text-muted mb-4">{{ algorithm.info.get_name(lang) }} · {{ test.display_title(lang) if test.display_title(lang) else ('Вопрос ' ~ (test.questions|length + 1)) }}</p>
+<form method="post" class="card card-body shadow-sm">
+    <div class="mb-3">
+        <label class="form-label">{{ 'Текст вопроса' if lang == 'ru' else 'Question text' }}</label>
+        <textarea class="form-control" name="question_text" rows="4" required></textarea>
+        <div class="form-text">{{ 'Вопрос сохраняется на текущем языке интерфейса.' if lang == 'ru' else 'The question is saved for the active interface language.' }}</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Варианты ответа' if lang == 'ru' else 'Answer options' }}</label>
+        {% for i in range(1,7) %}
+        <input class="form-control mb-2" name="choice_{{ i }}" placeholder="{{ ('Вариант ' ~ i) if lang == 'ru' else ('Option ' ~ i) }}">
+        {% endfor %}
+        <div class="form-text">{{ 'Добавьте минимум два варианта. Допускаются буквенные и числовые ответы.' if lang == 'ru' else 'Add at least two options. Text or numeric answers are accepted.' }}</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Номер правильного ответа' if lang == 'ru' else 'Correct answer number' }}</label>
+        <input class="form-control" name="correct_choice" type="number" min="1" required>
+        <div class="form-text">{{ 'Нумеруйте варианты сверху вниз: 1, 2, 3…' if lang == 'ru' else 'Number options from top to bottom: 1, 2, 3…' }}</div>
+    </div>
+    <div class="d-flex flex-column flex-md-row gap-2">
+        <button class="btn btn-primary" type="submit" name="add_another" value="1">{{ 'Сохранить и добавить ещё' if lang == 'ru' else 'Save and add another' }}</button>
+        <button class="btn btn-outline-secondary" type="submit">{{ 'Сохранить и вернуться' if lang == 'ru' else 'Save and return' }}</button>
+    </div>
+</form>
+{% endblock %}

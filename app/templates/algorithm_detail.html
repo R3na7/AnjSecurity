@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4">
+    <div>
+        <h2 class="mb-1">{{ algorithm.info.get_name(lang) }}</h2>
+        {% set badge_label = '' %}
+        {% if algorithm.info.category == 'symmetric' %}
+            {% set badge_label = 'Симметричный' if lang == 'ru' else 'Symmetric' %}
+        {% else %}
+            {% set badge_label = 'Асимметричный' if lang == 'ru' else 'Asymmetric' %}
+        {% endif %}
+        <span class="badge bg-secondary">{{ badge_label }}</span>
+    </div>
+</div>
+{% if not current_user.is_authenticated %}
+<div class="alert alert-info">
+    {{ 'Войдите или зарегистрируйтесь, чтобы открыть материалы по алгоритму.' if lang == 'ru' else 'Log in or register to access theory and tests for this algorithm.' }}
+</div>
+<div class="d-flex gap-2">
+    <a class="btn btn-primary" href="{{ url_for('login') }}">{{ t('login') }}</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('register') }}">{{ t('register') }}</a>
+</div>
+{% else %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ t('theory') }}</h5>
+                <p class="card-text flex-grow-1">{{ 'Перейдите к материалам, добавленным администратором.' if lang == 'ru' else 'Review materials added by the administrator.' }}</p>
+                <a class="btn btn-outline-primary mt-3" href="{{ url_for('theory_list', category=category, slug=algorithm.info.slug) }}">{{ 'Открыть теорию' if lang == 'ru' else 'Open theory' }}</a>
+                {% if current_user.is_admin %}
+                <a class="btn btn-link mt-2" href="{{ url_for('add_theory', category=category, slug=algorithm.info.slug) }}">{{ 'Добавить материал' if lang == 'ru' else 'Add theory article' }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ t('tests') }}</h5>
+                <p class="card-text flex-grow-1">{{ 'Пройдите тесты или создайте новые задания.' if lang == 'ru' else 'Take quizzes or create new assessments.' }}</p>
+                <a class="btn btn-outline-success mt-3" href="{{ url_for('test_list', category=category, slug=algorithm.info.slug) }}">{{ 'Открыть тесты' if lang == 'ru' else 'Open tests' }}</a>
+                {% if current_user.is_admin %}
+                <a class="btn btn-link mt-2" href="{{ url_for('create_test', category=category, slug=algorithm.info.slug) }}">{{ 'Создать тест' if lang == 'ru' else 'Create test' }}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
