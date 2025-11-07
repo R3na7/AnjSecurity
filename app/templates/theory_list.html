@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>{{ t('theory') }}</h2>
+    <div>
+        <h2 class="mb-0">{{ t('theory') }}</h2>
+        <small class="text-muted">{{ algorithm.info.get_name(lang) }}</small>
+    </div>
     {% if current_user.is_admin %}
-    <a class="btn btn-primary" href="{{ url_for('add_theory') }}">{{ 'Добавить материал' if lang == 'ru' else 'Add article' }}</a>
+    <a class="btn btn-primary" href="{{ url_for('add_theory', category=category, slug=algorithm.info.slug) }}">{{ 'Добавить материал' if lang == 'ru' else 'Add article' }}</a>
     {% endif %}
 </div>
 {% if articles %}
@@ -16,6 +19,6 @@
     </div>
     {% endfor %}
 {% else %}
-<p>{{ 'Материалы пока не добавлены.' if lang == 'ru' else 'No theory articles yet.' }}</p>
+<div class="alert alert-info">{{ 'Администратор ещё не добавил материалы по этому алгоритму.' if lang == 'ru' else 'The administrator has not added theory for this algorithm yet.' }}</div>
 {% endif %}
 {% endblock %}

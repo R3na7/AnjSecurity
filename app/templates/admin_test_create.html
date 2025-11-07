@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-1">{{ 'Новый тест' if lang == 'ru' else 'New test' }}</h2>
+<p class="text-muted mb-4">{{ algorithm.info.get_name(lang) }}</p>
+<form method="post" class="card card-body shadow-sm">
+    <div class="mb-3">
+        <label class="form-label">{{ 'Название теста' if lang == 'ru' else 'Test title' }}</label>
+        <input class="form-control" name="title">
+        <div class="form-text">{{ 'Поле сохраняется только для текущего языка.' if lang == 'ru' else 'Title is stored for the current language only.' }}</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Количество баллов' if lang == 'ru' else 'Total points' }}</label>
+        <input class="form-control" type="number" name="total_points" min="1" required>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">{{ 'Лимит времени (минуты)' if lang == 'ru' else 'Time limit (minutes)' }}</label>
+        <input class="form-control" type="number" name="time_limit" min="1" required>
+    </div>
+    <button class="btn btn-primary" type="submit">{{ 'Создать и добавить вопросы' if lang == 'ru' else 'Create and add questions' }}</button>
+</form>
+{% endblock %}

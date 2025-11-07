@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import List
+from typing import List, Optional
+
+import json
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -75,6 +77,7 @@ class TheoryArticle(db.Model):
     __tablename__ = "theory_articles"
 
     id = db.Column(db.Integer, primary_key=True)
+    algorithm_slug = db.Column(db.String(50), nullable=False)
     title_en = db.Column(db.String(255), nullable=False)
     title_ru = db.Column(db.String(255), nullable=False)
     content_en = db.Column(db.Text, nullable=False)
@@ -86,11 +89,15 @@ class Test(db.Model):
     __tablename__ = "tests"
 
     id = db.Column(db.Integer, primary_key=True)
+    algorithm_slug = db.Column(db.String(50), nullable=False)
     title_en = db.Column(db.String(255), nullable=True)
     title_ru = db.Column(db.String(255), nullable=True)
     description_en = db.Column(db.Text, nullable=True)
     description_ru = db.Column(db.Text, nullable=True)
+    total_points = db.Column(db.Integer, nullable=False, default=0)
+    time_limit_seconds = db.Column(db.Integer, nullable=False, default=60)
     questions = db.relationship("Question", backref="test", cascade="all, delete-orphan")
+    results = db.relationship("TestResult", backref="test", cascade="all, delete-orphan")
 
     def display_title(self, lang: str) -> str:
         if lang == "ru":
@@ -124,6 +131,40 @@ class Question(db.Model):
         if language == "en":
             return self.text_en or ""
         return self.text_ru or ""
+
+    def get_correct_choice(self, language: str) -> Optional[str]:
+        choices = self.get_choices(language)
+        if 0 <= self.correct_index < len(choices):
+            return choices[self.correct_index]
+        return None
+
+
+class TestResult(db.Model):
+    __tablename__ = "test_results"
+
+    id = db.Column(db.Integer, primary_key=True)
+    test_id = db.Column(db.Integer, db.ForeignKey("tests.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    score_points = db.Column(db.Integer, nullable=False)
+    max_points = db.Column(db.Integer, nullable=False)
+    correct_answers = db.Column(db.Integer, nullable=False)
+    incorrect_answers = db.Column(db.Integer, nullable=False)
+    attempt_number = db.Column(db.Integer, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    answers_payload = db.Column(db.Text, nullable=True)
+
+    user = db.relationship("User", backref=db.backref("test_results", cascade="all, delete-orphan"))
+
+    def save_answers(self, answers: List[dict]) -> None:
+        self.answers_payload = json.dumps(answers)
+
+    def load_answers(self) -> List[dict]:
+        if not self.answers_payload:
+            return []
+        try:
+            return json.loads(self.answers_payload)
+        except json.JSONDecodeError:
+            return []
 
 
 class PasswordPolicy(db.Model):

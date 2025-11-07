@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>{{ 'Новый материал' if lang == 'ru' else 'New article' }}</h2>
+<h2 class="mb-1">{{ 'Новый материал' if lang == 'ru' else 'New article' }}</h2>
+<p class="text-muted mb-4">{{ algorithm.info.get_name(lang) }}</p>
 <form method="post" class="card card-body shadow-sm">
     <div class="row">
         <div class="col-md-6">

@@ -9,3 +9,13 @@ body {
 .alert {
     margin-top: 1rem;
 }
+
+.dropdown-hover:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+}
+
+.test-timer {
+    font-size: 1.25rem;
+    font-weight: 600;
+}

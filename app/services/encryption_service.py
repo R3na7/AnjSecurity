@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, List, Optional
 
 from app.encryption.algorithms import ALGORITHMS, CipherAlgorithm, CipherInfo
 
@@ -16,6 +16,19 @@ class EncryptionService:
 
     def all_algorithms(self) -> Iterable[CipherAlgorithm]:
         return self._algorithms.values()
+
+    def algorithms_by_category(self, category: str) -> List[CipherAlgorithm]:
+        return [
+            algorithm
+            for algorithm in self._algorithms.values()
+            if algorithm.info.category == category
+        ]
+
+    def categories(self) -> Dict[str, List[CipherAlgorithm]]:
+        categories: Dict[str, List[CipherAlgorithm]] = {}
+        for algorithm in self._algorithms.values():
+            categories.setdefault(algorithm.info.category, []).append(algorithm)
+        return categories
 
     def encrypt(self, slug: str, plaintext: str, key: Optional[str] = None) -> str:
         algorithm = self.get_algorithm(slug)

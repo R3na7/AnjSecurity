@@ -75,5 +75,9 @@ TRANSLATIONS = Localization(
             "en": "This test is not available in the selected language yet.",
             "ru": "Этот тест ещё не доступен на выбранном языке.",
         },
+        "test_attempts_exhausted": {
+            "en": "You have used all attempts for this test.",
+            "ru": "Все попытки для этого теста исчерпаны.",
+        },
     }
 )

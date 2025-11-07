@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-4">
+    {% if category == 'symmetric' %}
+        {{ 'Симметричные алгоритмы' if lang == 'ru' else 'Symmetric algorithms' }}
+    {% else %}
+        {{ 'Асимметричные алгоритмы' if lang == 'ru' else 'Asymmetric algorithms' }}
+    {% endif %}
+</h2>
+<div class="row g-4">
+    {% for algorithm in algorithms %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ algorithm.info.get_name(lang) }}</h5>
+                <p class="card-text text-muted">{{ 'Выберите алгоритм, чтобы перейти к теории и тестам.' if lang == 'ru' else 'Select the algorithm to open theory and tests.' }}</p>
+                <a class="btn btn-primary mt-auto" href="{{ url_for('algorithm_detail', category=category, slug=algorithm.info.slug) }}">{{ 'Подробнее' if lang == 'ru' else 'Details' }}</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">{{ 'Алгоритмы не найдены.' if lang == 'ru' else 'No algorithms available.' }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
