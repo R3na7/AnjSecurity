@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-0">{{ t('theory') }}</h2>
+        <small class="text-muted">{{ algorithm.info.get_name(lang) }}</small>
+    </div>
+    {% if current_user.is_admin %}
+    <a class="btn btn-primary" href="{{ url_for('add_theory', category=category, slug=algorithm.info.slug) }}">{{ 'Добавить материал' if lang == 'ru' else 'Add article' }}</a>
+    {% endif %}
+</div>
+{% if articles %}
+    {% for article in articles %}
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title">{{ article.title_ru if lang == 'ru' else article.title_en }}</h4>
+            <p class="card-text">{{ (article.content_ru if lang == 'ru' else article.content_en)|truncate(300) }}</p>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="alert alert-info">{{ 'Администратор ещё не добавил материалы по этому алгоритму.' if lang == 'ru' else 'The administrator has not added theory for this algorithm yet.' }}</div>
+{% endif %}
+{% endblock %}

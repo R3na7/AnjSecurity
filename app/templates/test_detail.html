@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+    <div>
+        <h2 class="mb-1">{{ test.display_title(lang) or t('tests') }}</h2>
+        <small class="text-muted">{{ algorithm.info.get_name(lang) }}</small>
+    </div>
+    <div class="test-timer text-danger" id="test-timer"></div>
+</div>
+<div class="alert alert-warning">{{ 'У вас есть' if lang == 'ru' else 'You have' }} {{ (test.time_limit_seconds // 60) }} {{ 'минут на выполнение теста.' if lang == 'ru' else 'minutes to finish the test.' }}</div>
+<form method="post" class="card card-body shadow-sm" id="test-form">
+    {% for question in questions %}
+    <div class="mb-4">
+        <h5>{{ loop.index }}. {{ question.get_text(lang) }}</h5>
+        {% set choices = question.get_choices(lang) %}
+        {% for choice in choices %}
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="question_{{ question.id }}" value="{{ loop.index0 }}" id="q{{ question.id }}_{{ loop.index }}">
+            <label class="form-check-label" for="q{{ question.id }}_{{ loop.index }}">{{ choice }}</label>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button class="btn btn-success" type="submit">{{ 'Отправить ответы' if lang == 'ru' else 'Submit answers' }}</button>
+</form>
+<script>
+    const timeLimitSeconds = {{ test.time_limit_seconds }};
+    const timerElement = document.getElementById('test-timer');
+    const formElement = document.getElementById('test-form');
+    let remaining = timeLimitSeconds;
+
+    function formatTime(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimer() {
+        if (!timerElement) {
+            return;
+        }
+        timerElement.textContent = '{{ 'Оставшееся время' if lang == 'ru' else 'Time remaining' }}: ' + formatTime(remaining);
+        if (remaining <= 0) {
+            formElement.submit();
+            return;
+        }
+        remaining -= 1;
+        setTimeout(updateTimer, 1000);
+    }
+
+    updateTimer();
+</script>
+{% endblock %}

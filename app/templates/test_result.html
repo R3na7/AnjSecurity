@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-1">{{ test.display_title(lang) or t('tests') }}</h2>
+    <small class="text-muted">{{ algorithm.info.get_name(lang) }}</small>
+</div>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title">{{ 'Результат' if lang == 'ru' else 'Result' }}: {{ score_points }}/{{ max_points }}</h5>
+        <p class="card-text">{{ 'Попытка' if lang == 'ru' else 'Attempt' }}: {{ attempt_number }} · {{ 'Осталось попыток' if lang == 'ru' else 'Attempts left' }}: {{ attempts_left }}</p>
+        {% if timed_out %}
+        <div class="alert alert-warning mb-0">{{ 'Время теста истекло. Ответы сохранены автоматически.' if lang == 'ru' else 'Time expired. Answers were submitted automatically.' }}</div>
+        {% endif %}
+    </div>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">{{ 'Ответы' if lang == 'ru' else 'Answers' }}</h5>
+        <ol class="mb-0">
+            {% for item in answers %}
+            <li class="mb-3">
+                <p class="mb-1">{{ item.question }}</p>
+                {% if item.selected %}
+                <p class="mb-1">{{ 'Ваш ответ' if lang == 'ru' else 'Your answer' }}: <strong class="{% if item.is_correct %}text-success{% else %}text-danger{% endif %}">{{ item.selected }}</strong></p>
+                {% else %}
+                <p class="mb-1 text-danger">{{ 'Ответ не выбран' if lang == 'ru' else 'No answer selected' }}</p>
+                {% endif %}
+                <p class="mb-0 text-muted">{{ 'Правильный ответ' if lang == 'ru' else 'Correct answer' }}: {{ item.correct if item.correct else ('нет данных' if lang == 'ru' else 'n/a') }}</p>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+</div>
+<div class="mt-4">
+    <a class="btn btn-primary" href="{{ url_for('test_list', category=category, slug=algorithm.info.slug) }}">{{ 'К тестам' if lang == 'ru' else 'Back to tests' }}</a>
+</div>
+{% endblock %}
